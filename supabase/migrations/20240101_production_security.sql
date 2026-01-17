@@ -111,9 +111,9 @@ CREATE POLICY "Staff can delete invoices"
   ON invoices FOR DELETE
   TO authenticated
   USING (true);
-
+  
 -- ============================================================================
--- USERS TABLE POLICIES (Role-Based Access)
+-- USERS TABLE POLICIES (Role-Based Access) - FIXED
 -- ============================================================================
 
 -- All authenticated users can VIEW users
@@ -134,8 +134,8 @@ CREATE POLICY "Only admins can insert users"
     )
   );
 
--- Only admins can UPDATE user roles
-CREATE POLICY "Only admins can update user roles"
+-- Only admins can UPDATE user roles (and other fields)
+CREATE POLICY "Only admins can update users"
   ON users FOR UPDATE
   TO authenticated
   USING (
@@ -145,17 +145,7 @@ CREATE POLICY "Only admins can update user roles"
       AND users.role = 'Admin'
     )
   )
-  WITH CHECK (
-    -- Allow admins to update any field, but only admins can change roles
-    (
-      OLD.role = NEW.role OR
-      EXISTS (
-        SELECT 1 FROM users
-        WHERE users.id = auth.uid()
-        AND users.role = 'Admin'
-      )
-    )
-  );
+  WITH CHECK (true);
 
 -- Only admins can DELETE users
 CREATE POLICY "Only admins can delete users"
@@ -169,15 +159,12 @@ CREATE POLICY "Only admins can delete users"
     )
   );
 
--- Users can UPDATE their own profile (except role)
+-- Users can UPDATE their own profile
 CREATE POLICY "Users can update own profile"
   ON users FOR UPDATE
   TO authenticated
   USING (auth.uid() = id)
-  WITH CHECK (
-    auth.uid() = id AND
-    OLD.role = NEW.role  -- Cannot change own role
-  );
+  WITH CHECK (auth.uid() = id);
 
 -- ============================================================================
 -- CUSTOMERS TABLE POLICIES
