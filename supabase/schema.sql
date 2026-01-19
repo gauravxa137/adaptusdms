@@ -310,15 +310,18 @@ CREATE TRIGGER update_facebook_business_account_updated_at BEFORE UPDATE ON face
 -- ============================================================================
 
 -- Vehicle Inventory Summary View
-CREATE OR REPLACE VIEW vehicle_inventory_summary AS
+CREATE OR REPLACE VIEW sales_performance WITH (security_invoker = true) AS
 SELECT 
-    status,
-    COUNT(*) as count,
-    SUM(purchase_price + extra_costs + taxes) as total_purchase_value,
-    SUM(retail_price) as total_retail_value,
-    SUM(retail_price - purchase_price - extra_costs - taxes) as total_estimated_income
-FROM vehicles
-GROUP BY status;
+    v.id as vehicle_id,
+    v.year,
+    v.make,
+    v.model,
+    COUNT(sd.id) as deal_count,
+    SUM(sd.sale_price) as total_revenue,
+    AVG(sd.sale_price) as avg_sale_price
+FROM vehicles v
+LEFT JOIN sales_deals sd ON v.id = sd.vehicle_id AND sd.deal_status = 'Paid Off'
+GROUP BY v.id, v.year, v.make, v.model;
 
 -- Sales Performance View
 CREATE OR REPLACE VIEW sales_performance AS
